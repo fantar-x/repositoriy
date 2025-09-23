@@ -228,6 +228,7 @@ const REAL_CARS = [
     model: 'Supra A40',
     year: 1978,
     color: '#ff6b6b',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Toyota_Celica_Supra_Mark_I_in_Bangkok.jpg',
     specs: {
       engine: '2.6L inline-6 (4M-E)',
       power: '110–125 hp',
@@ -245,6 +246,7 @@ const REAL_CARS = [
     model: 'Mustang I',
     year: 1964,
     color: '#5ec8ff',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/1964_Ford_Mustang_coupe.jpg',
     specs: {
       engine: '2.8–4.7L I6/V8',
       power: '101–271 hp',
@@ -262,6 +264,7 @@ const REAL_CARS = [
     model: 'Impala',
     year: 1967,
     color: '#b389ff',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Chevrolet_Impala_Sport_Sedan_1967.jpg',
     specs: {
       engine: '4.1–7.0L I6/V8',
       power: '155–385 hp',
@@ -405,8 +408,27 @@ function initThree(car){
   }
   const container = document.getElementById('inspect-viewport');
   container.innerHTML = '';
+  // If we have a photo, render it prominently
+  if (car.photo) {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-wrap';
+    const img = document.createElement('img');
+    img.className = 'car-photo';
+    img.alt = `${car.make} ${car.model}`;
+    img.src = car.photo;
+    wrap.appendChild(img);
+    container.appendChild(wrap);
+    // Also prepare optional tint overlay for color feel
+    const tint = document.createElement('div');
+    tint.className = 'photo-tint';
+    tint.style.background = car.color;
+    wrap.appendChild(tint);
+    // Hook smooth color change to photo tint instead of mesh
+    three._photoTint = tint;
+  }
   const width = container.clientWidth || 600;
   const height = container.clientHeight || 400;
+  // Only build WebGL canvas if we still want the 3D model visible alongside photo
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -470,7 +492,17 @@ function initThree(car){
   const animate = () => {
     controls.update();
     // animate color
-    if (three._colorLerp && three.mesh && three.mesh.material) {
+    if (three._photoTint) {
+      // Blend photo tint
+      const now = performance.now();
+      const elapsed = now - three._colorLerp.startMs;
+      const k = Math.min(1, elapsed / three._colorLerp.durMs);
+      const r = THREE.MathUtils.lerp(three._colorLerp.from.r, three._colorLerp.to.r, k);
+      const g = THREE.MathUtils.lerp(three._colorLerp.from.g, three._colorLerp.to.g, k);
+      const b = THREE.MathUtils.lerp(three._colorLerp.from.b, three._colorLerp.to.b, k);
+      const hex = `#${new THREE.Color(r, g, b).getHexString()}`;
+      three._photoTint.style.background = hex;
+    } else if (three._colorLerp && three.mesh && three.mesh.material) {
       const now = performance.now();
       const elapsed = now - three._colorLerp.startMs;
       const k = Math.min(1, elapsed / three._colorLerp.durMs);
@@ -517,9 +549,9 @@ function setupColorSwatches(car){
 }
 
 function setCarColorSmooth(hex, durationMs = 2500){
-  if (!three.mesh || !three.mesh.material || !THREE) return;
+  if (typeof THREE === 'undefined') return;
   const to = new THREE.Color(hex);
-  const from = three.mesh.material.color.clone();
+  const from = three._photoTint ? new THREE.Color(three._photoTint.style.background || '#000000') : (three.mesh?.material?.color?.clone?.() || new THREE.Color(hex));
   three._colorLerp = {
     from,
     to,
