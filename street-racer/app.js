@@ -45,15 +45,29 @@ function createGradientTexture(width, height, stops) {
 
 function createCarGraphics(color = 0xff4444) {
   const g = new PIXI.Graphics();
-  g.roundRect(-18, -8, 36, 16, 4).fill(color).stroke({ width: 2, color: 0x000000, alpha: 0.6 });
-  g.rect(-14, -10, 28, 6).fill(0x222a).stroke({ width: 0 });
+  g.beginFill(color, 1);
+  g.drawRoundedRect(-18, -8, 36, 16, 4);
+  g.endFill();
+  g.lineStyle(2, 0x000000, 0.6);
+  g.moveTo(-18, -8); g.lineTo(18, -8); g.lineTo(18, 8); g.lineTo(-18, 8); g.lineTo(-18, -8);
+  g.lineStyle(0, 0, 0);
+  g.beginFill(0x222222, 0.65);
+  g.drawRect(-14, -10, 28, 6);
+  g.endFill();
   return g;
 }
 
 function createPoliceGraphics() {
   const g = new PIXI.Graphics();
-  g.roundRect(-18, -8, 36, 16, 4).fill(0x111111).stroke({ width: 2, color: 0x000000, alpha: 0.6 });
-  g.rect(-9, -7, 18, 6).fill(0xffffff);
+  g.beginFill(0x111111, 1);
+  g.drawRoundedRect(-18, -8, 36, 16, 4);
+  g.endFill();
+  g.lineStyle(2, 0x000000, 0.6);
+  g.moveTo(-18, -8); g.lineTo(18, -8); g.lineTo(18, 8); g.lineTo(-18, 8); g.lineTo(-18, -8);
+  g.lineStyle(0, 0, 0);
+  g.beginFill(0xffffff, 1);
+  g.drawRect(-9, -7, 18, 6);
+  g.endFill();
   return g;
 }
 
@@ -71,7 +85,9 @@ function setupPixi() {
       [0.6, '#0b0b0b'],
       [1, '#000000']
     ]);
-    const bg = new PIXI.TilingSprite({ texture: gradientTex, width: width, height: height });
+    const bg = new PIXI.Sprite(gradientTex);
+    bg.width = app.renderer.width;
+    bg.height = app.renderer.height;
     app.stage.addChild(bg);
 
     // Lane markers
@@ -82,7 +98,9 @@ function setupPixi() {
       const x = (width / laneCount) * i;
       const line = new PIXI.Graphics();
       const alpha = i === 0 || i === laneCount ? 0.25 : 0.18;
-      line.rect(-1, 0, 2, height).fill({ color: 0xffffff, alpha });
+      line.beginFill(0xffffff, alpha);
+      line.drawRect(-1, 0, 2, height);
+      line.endFill();
       line.x = x;
       lanesContainer.addChild(line);
       state.bg.lanes.push(line);
@@ -94,7 +112,7 @@ function setupPixi() {
     app.stage.addChild(bloom);
 
     state.app = app;
-    app.ticker.add((tick) => update(tick));
+    app.ticker.add(() => update());
   });
 }
 
@@ -131,7 +149,8 @@ function update() {
   const advance = (arr) => {
     for (let i = arr.length - 1; i >= 0; i--) {
       const o = arr[i];
-      o.g.y += (o.v * app.ticker.deltaMS) / 1000;
+      const delta = app.ticker?.deltaMS || 16.7;
+      o.g.y += (o.v * delta) / 1000;
       if (o.type === 'police') {
         const t = now / 200;
         const flash = (Math.sin(t * 6) + 1) * 0.5; // 0..1
@@ -239,16 +258,31 @@ function renderCarCards() {
     preview.style.height = '120px';
     preview.style.display = 'grid';
     preview.style.placeItems = 'center';
-    // preview car graphic
-    const canvas = document.createElement('canvas');
-    canvas.width = 240; canvas.height = 120;
-    const app = new PIXI.Application();
-    app.init({ backgroundAlpha: 0, resizeTo: canvas, width: 240, height: 120 }).then(() => {
-      const g = createCarGraphics(PIXI.utils.string2hex(car.color));
-      g.x = 120; g.y = 60; g.scale.set(1.6);
-      app.stage.addChild(g);
-      preview.appendChild(app.canvas);
-    });
+    // Lightweight inline SVG preview (no nested Pixi)
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '240');
+    svg.setAttribute('height', '120');
+    svg.setAttribute('viewBox', '0 0 240 120');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '90');
+    rect.setAttribute('y', '52');
+    rect.setAttribute('rx', '8');
+    rect.setAttribute('ry', '8');
+    rect.setAttribute('width', '60');
+    rect.setAttribute('height', '16');
+    rect.setAttribute('fill', car.color);
+    rect.setAttribute('stroke', '#000');
+    rect.setAttribute('stroke-opacity', '0.6');
+    const roof = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    roof.setAttribute('x', '96');
+    roof.setAttribute('y', '46');
+    roof.setAttribute('width', '48');
+    roof.setAttribute('height', '8');
+    roof.setAttribute('fill', '#222');
+    roof.setAttribute('fill-opacity', '0.65');
+    svg.appendChild(rect);
+    svg.appendChild(roof);
+    preview.appendChild(svg);
 
     const specs = document.createElement('div');
     specs.className = 'specs';
@@ -279,8 +313,17 @@ function renderCarCards() {
 
 // Bootstrap
 window.addEventListener('DOMContentLoaded', () => {
-  setupPixi();
+  try {
+    if (typeof PIXI !== 'undefined') {
+      setupPixi();
+    } else {
+      console.warn('PIXI is not available. Background will be disabled.');
+    }
+  } catch (e) {
+    console.error('Failed to init PIXI', e);
+  }
   setupUI();
   renderCarCards();
 });
+
 
