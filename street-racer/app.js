@@ -398,6 +398,14 @@ function openInspect(car){
     const emblemSelected = document.querySelector('.emblem.selected');
     validateInspectForm(!!leagueSelected, !!emblemSelected);
   });
+  // Wire Next to navigate to new main menu
+  if (nextBtn) nextBtn.onclick = () => {
+    const name = document.getElementById('player-name')?.value?.trim();
+    const leagueSelected = document.querySelector('.league-card.selected');
+    if (!name || !leagueSelected) return;
+    document.getElementById('inspect').classList.add('hidden');
+    document.getElementById('main-menu').classList.remove('hidden');
+  };
 }
 
 let three = { scene: null, renderer: null, camera: null, controls: null, mesh: null };

@@ -208,3 +208,9 @@ html, body {
 .emblem { width: 40px; height: 40px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.4); display: grid; place-items: center; cursor: pointer; background: rgba(0,0,0,0.3); }
 .emblem.selected { outline: 2px solid var(--accent); }
 
+/* New main menu layout */
+.mainmenu-wrap { position: fixed; inset: 0; }
+.menu-store { position: absolute; top: 16px; left: 16px; }
+.menu-cars { position: absolute; top: 70px; left: 16px; }
+.menu-start { position: absolute; right: 16px; bottom: 16px; padding: 16px 22px; font-size: 18px; }
+
