@@ -384,6 +384,17 @@ function openInspect(car){
   const inspect = document.getElementById('inspect');
   inspect.classList.remove('hidden');
   initThree(car);
+  setupLeaguesAndEmblems();
+  const nameInput = document.getElementById('player-name');
+  const leaguesRoot = document.getElementById('league-options');
+  const emblemsRoot = document.getElementById('emblem-options');
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+  nameInput?.addEventListener('input', () => {
+    const leagueSelected = document.querySelector('.league-card.selected');
+    const emblemSelected = document.querySelector('.emblem.selected');
+    validateInspectForm(!!leagueSelected, !!emblemSelected);
+  });
 }
 
 let three = { scene: null, renderer: null, camera: null, controls: null, mesh: null };
@@ -414,18 +425,38 @@ function initThree(car){
   controls.enableDamping = true;
   controls.target.set(0, 0.5, 0);
 
-  // Simple car-like geometry placeholder (until real GLTF)
-  const bodyColor = new THREE.Color(car.color);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
-  const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = 0.6;
-  scene.add(body);
-
-  const cabinMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.2, roughness: 0.7 });
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.9), cabinMat);
-  cabin.position.set(0, 1.0, 0);
-  scene.add(cabin);
+  // Load GLTF model; fallback to simple geometry
+  let body = null;
+  if (THREE.GLTFLoader) {
+    const loader = new THREE.GLTFLoader();
+    // Using a lightweight demo car GLB hosted on jsDelivr (low poly)
+    const url = 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Avocado/glTF-Binary/Avocado.glb';
+    loader.load(url, (gltf) => {
+      const root = gltf.scene;
+      root.traverse((obj) => { if (obj.isMesh) { obj.castShadow = true; obj.receiveShadow = true; } });
+      root.scale.set(0.02, 0.02, 0.02);
+      root.position.y = 0.2;
+      scene.add(root);
+      three.mesh = root;
+    }, undefined, () => {
+      // Fallback if failed
+      const bodyColor = new THREE.Color(car.color);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
+      const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
+      body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.6;
+      scene.add(body);
+      three.mesh = body;
+    });
+  } else {
+    const bodyColor = new THREE.Color(car.color);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
+    const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
+    body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.6;
+    scene.add(body);
+    three.mesh = body;
+  }
 
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 64), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1 }));
   ground.rotation.x = -Math.PI/2;
@@ -461,12 +492,83 @@ function setupColorSwatches(car){
     btn.title = c;
     btn.addEventListener('click', () => {
       car.color = c;
-      if (three.mesh && three.mesh.material) {
-        three.mesh.material.color = new THREE.Color(c);
-        three.mesh.material.needsUpdate = true;
+      if (three.mesh) {
+        if (three.mesh.material) {
+          three.mesh.material.color = new THREE.Color(c);
+          three.mesh.material.needsUpdate = true;
+        } else {
+          three.mesh.traverse?.((obj) => {
+            if (obj.isMesh && obj.material && obj.material.color) {
+              obj.material.color = new THREE.Color(c);
+              obj.material.needsUpdate = true;
+            }
+          });
+        }
       }
     });
     swatches.appendChild(btn);
   }
+}
+
+// Leagues and emblems
+const LEAGUES = [
+  { id: 'glory-ring', name: 'Кольцо славы', bonuses: ['+20% к скорости', '+20% к славе', '+10% к деньгам', '-15% к долговечности деталей'] },
+  { id: 'iron-horses', name: 'Железные кони', bonuses: ['+20% к долговечности деталей', '-20% к стоимости топлива', '-5% к деньгам', '-5% к ТО'] },
+  { id: 'formula-x', name: 'Формула X', bonuses: ['-40% к стоимости топлива', '+30% к скорости', '+20% к деньгам', '+20% к славе', '-40% к долговечности деталей', '+15% к стоимости авто'] }
+];
+const EMBLEMS = ['🏁','🔥','⚡','🛡️','🦅','🐍','👑'];
+
+function setupLeaguesAndEmblems(){
+  const leaguesRoot = document.getElementById('league-options');
+  const emblemsRoot = document.getElementById('emblem-options');
+  if (!leaguesRoot || !emblemsRoot) return;
+  leaguesRoot.innerHTML = '';
+  emblemsRoot.innerHTML = '';
+  let selectedLeague = null;
+  let selectedEmblem = null;
+
+  for (const lg of LEAGUES) {
+    const card = document.createElement('div');
+    card.className = 'league-card';
+    const name = document.createElement('div');
+    name.className = 'league-name';
+    name.textContent = lg.name;
+    const bonuses = document.createElement('div');
+    bonuses.className = 'league-bonuses';
+    bonuses.textContent = lg.bonuses.join(' · ');
+    card.appendChild(name);
+    card.appendChild(bonuses);
+    card.addEventListener('click', () => {
+      selectedLeague = lg.id;
+      document.querySelectorAll('.league-card').forEach(el=>el.classList.remove('selected'));
+      card.classList.add('selected');
+      validateInspectForm(selectedLeague, selectedEmblem);
+    });
+    leaguesRoot.appendChild(card);
+  }
+
+  for (const sym of EMBLEMS) {
+    const e = document.createElement('button');
+    e.className = 'emblem';
+    e.textContent = sym;
+    e.addEventListener('click', () => {
+      selectedEmblem = sym;
+      document.querySelectorAll('.emblem').forEach(el=>el.classList.remove('selected'));
+      e.classList.add('selected');
+      validateInspectForm(selectedLeague, selectedEmblem);
+    });
+    emblemsRoot.appendChild(e);
+  }
+
+  // store handlers on DOM for access
+  leaguesRoot.dataset.selected = '';
+  emblemsRoot.dataset.selected = '';
+}
+
+function validateInspectForm(selectedLeague, selectedEmblem){
+  const name = document.getElementById('player-name')?.value?.trim();
+  const next = document.getElementById('next-btn');
+  const ok = Boolean(name) && Boolean(selectedLeague);
+  if (next) next.disabled = !ok;
 }
 

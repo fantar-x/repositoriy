@@ -187,3 +187,21 @@ html, body {
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); cursor: pointer; background: transparent; }
 
+.leagues { display: grid; gap: 10px; }
+.league-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+}
+.league-card.selected { outline: 2px solid var(--primary); }
+.league-name { font-weight: 800; }
+.league-bonuses { color: var(--muted); font-size: 13px; }
+
+.emblems { display: flex; flex-wrap: wrap; gap: 8px; }
+.emblem { width: 40px; height: 40px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.4); display: grid; place-items: center; cursor: pointer; background: rgba(0,0,0,0.3); }
+.emblem.selected { outline: 2px solid var(--accent); }
+

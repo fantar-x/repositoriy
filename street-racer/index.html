@@ -13,6 +13,7 @@
   <!-- Three.js for 3D viewer -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js" defer></script>
   <script src="./app.js" type="module" defer></script>
   <link rel="manifest" href="data:application/manifest+json,{\n  \"name\": \"Street Racer\",\n  \"short_name\": \"Racer\",\n  \"display\": \"standalone\",\n  \"background_color\": \"#000000\",\n  \"theme_color\": \"#000000\"\n}">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -77,6 +78,14 @@
           <div class="field">
             <label class="label" data-i18n="color">Цвет</label>
             <div id="color-swatches" class="swatches"></div>
+          </div>
+          <div class="field">
+            <label class="label" data-i18n="league">Гоночная лига (обязательно)</label>
+            <div id="league-options" class="leagues"></div>
+          </div>
+          <div class="field">
+            <label class="label" data-i18n="emblem">Эмблема</label>
+            <div id="emblem-options" class="emblems"></div>
           </div>
           <div class="field">
             <label for="player-name" class="label" data-i18n="name">Имя персонажа</label>
