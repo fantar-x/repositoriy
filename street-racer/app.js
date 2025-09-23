@@ -452,6 +452,15 @@ function initThree(car){
 
   three.mesh = body;
 
+  // Smooth color transition helper
+  three._colorLerp = {
+    from: body.material.color.clone(),
+    to: body.material.color.clone(),
+    t: 1,
+    durMs: 2500,
+    startMs: performance.now()
+  };
+
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 64), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1 }));
   ground.rotation.x = -Math.PI/2;
   scene.add(ground);
@@ -460,6 +469,15 @@ function initThree(car){
 
   const animate = () => {
     controls.update();
+    // animate color
+    if (three._colorLerp && three.mesh && three.mesh.material) {
+      const now = performance.now();
+      const elapsed = now - three._colorLerp.startMs;
+      const k = Math.min(1, elapsed / three._colorLerp.durMs);
+      three.mesh.material.color.r = THREE.MathUtils.lerp(three._colorLerp.from.r, three._colorLerp.to.r, k);
+      three.mesh.material.color.g = THREE.MathUtils.lerp(three._colorLerp.from.g, three._colorLerp.to.g, k);
+      three.mesh.material.color.b = THREE.MathUtils.lerp(three._colorLerp.from.b, three._colorLerp.to.b, k);
+    }
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   };
@@ -485,23 +503,30 @@ function setupColorSwatches(car){
     btn.style.background = c;
     btn.title = c;
     btn.addEventListener('click', () => {
+      setCarColorSmooth(c, 2000 + Math.random()*2000);
       car.color = c;
-      if (three.mesh) {
-        if (three.mesh.material) {
-          three.mesh.material.color = new THREE.Color(c);
-          three.mesh.material.needsUpdate = true;
-        } else {
-          three.mesh.traverse?.((obj) => {
-            if (obj.isMesh && obj.material && obj.material.color) {
-              obj.material.color = new THREE.Color(c);
-              obj.material.needsUpdate = true;
-            }
-          });
-        }
-      }
     });
     swatches.appendChild(btn);
   }
+  const picker = document.getElementById('color-picker');
+  if (picker) picker.addEventListener('input', (e) => {
+    const c = e.target.value;
+    setCarColorSmooth(c, 2000 + Math.random()*2000);
+    car.color = c;
+  });
+}
+
+function setCarColorSmooth(hex, durationMs = 2500){
+  if (!three.mesh || !three.mesh.material || !THREE) return;
+  const to = new THREE.Color(hex);
+  const from = three.mesh.material.color.clone();
+  three._colorLerp = {
+    from,
+    to,
+    t: 0,
+    durMs: durationMs,
+    startMs: performance.now()
+  };
 }
 
 // Leagues and emblems
