@@ -359,11 +359,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // i18n
 const I18N = {
-  ru: { title: 'Street Racer', start: 'Начать заезд', back: 'Назад', settings: 'Настройки', language: 'Язык', volume: 'Громкость', close: 'Закрыть', carSelectTitle: 'Выбор машины', carSelectSubtitle: 'Фон чёрный, выберите автомобиль:', choose: 'Выбрать', inspectTitle: 'Осмотр автомобиля', color: 'Цвет', name: 'Имя персонажа', next: 'Далее' },
-  en: { title: 'Street Racer', start: 'Start Race', back: 'Back', settings: 'Settings', language: 'Language', volume: 'Volume', close: 'Close', carSelectTitle: 'Car Selection', carSelectSubtitle: 'Black background, choose a car:', choose: 'Choose', inspectTitle: 'Car Inspection', color: 'Color', name: 'Character Name', next: 'Next' },
-  fr: { title: 'Street Racer', start: 'Commencer', back: 'Retour', settings: 'Paramètres', language: 'Langue', volume: 'Volume', close: 'Fermer', carSelectTitle: 'Sélection de voiture', carSelectSubtitle: 'Fond noir, choisissez une voiture:', choose: 'Choisir', inspectTitle: 'Inspection de voiture', color: 'Couleur', name: 'Nom du personnage', next: 'Suivant' },
-  de: { title: 'Street Racer', start: 'Rennen starten', back: 'Zurück', settings: 'Einstellungen', language: 'Sprache', volume: 'Lautstärke', close: 'Schließen', carSelectTitle: 'Fahrzeugauswahl', carSelectSubtitle: 'Schwarzer Hintergrund, wählen Sie ein Auto:', choose: 'Wählen', inspectTitle: 'Fahrzeuginspektion', color: 'Farbe', name: 'Charaktername', next: 'Weiter' },
-  es: { title: 'Street Racer', start: 'Iniciar carrera', back: 'Atrás', settings: 'Configuración', language: 'Idioma', volume: 'Volumen', close: 'Cerrar', carSelectTitle: 'Selección de coche', carSelectSubtitle: 'Fondo negro, elige un coche:', choose: 'Elegir', inspectTitle: 'Inspección del coche', color: 'Color', name: 'Nombre del personaje', next: 'Siguiente' }
+  ru: { title: 'Street Racer', start: 'Начать заезд', back: 'Назад', settings: 'Настройки', language: 'Язык', volume: 'Громкость', close: 'Закрыть', carSelectTitle: 'Выбор машины', carSelectSubtitle: 'Фон чёрный, выберите автомобиль:', choose: 'Выбрать', inspectTitle: 'Осмотр автомобиля', color: 'Цвет', name: 'Имя персонажа', next: 'Далее', league: 'Гоночная лига (обязательно)', emblem: 'Эмблема' },
+  en: { title: 'Street Racer', start: 'Start Race', back: 'Back', settings: 'Settings', language: 'Language', volume: 'Volume', close: 'Close', carSelectTitle: 'Car Selection', carSelectSubtitle: 'Black background, choose a car:', choose: 'Choose', inspectTitle: 'Car Inspection', color: 'Color', name: 'Character Name', next: 'Next', league: 'Racing League (required)', emblem: 'Emblem' },
+  fr: { title: 'Street Racer', start: 'Commencer', back: 'Retour', settings: 'Paramètres', language: 'Langue', volume: 'Volume', close: 'Fermer', carSelectTitle: 'Sélection de voiture', carSelectSubtitle: 'Fond noir, choisissez une voiture:', choose: 'Choisir', inspectTitle: 'Inspection de voiture', color: 'Couleur', name: 'Nom du personnage', next: 'Suivant', league: 'Ligue de course (obligatoire)', emblem: 'Emblème' },
+  de: { title: 'Street Racer', start: 'Rennen starten', back: 'Zurück', settings: 'Einstellungen', language: 'Sprache', volume: 'Lautstärke', close: 'Schließen', carSelectTitle: 'Fahrzeugauswahl', carSelectSubtitle: 'Schwarzer Hintergrund, wählen Sie ein Auto:', choose: 'Wählen', inspectTitle: 'Fahrzeuginspektion', color: 'Farbe', name: 'Charaktername', next: 'Weiter', league: 'Rennliga (erforderlich)', emblem: 'Emblem' },
+  es: { title: 'Street Racer', start: 'Iniciar carrera', back: 'Atrás', settings: 'Configuración', language: 'Idioma', volume: 'Volumen', close: 'Cerrar', carSelectTitle: 'Selección de coche', carSelectSubtitle: 'Fondo negro, elige un coche:', choose: 'Elegir', inspectTitle: 'Inspección del coche', color: 'Color', name: 'Nombre del personaje', next: 'Siguiente', league: 'Liga de carreras (obligatorio)', emblem: 'Emblema' }
 };
 let currentLang = 'ru';
 function t(key){
@@ -383,8 +383,8 @@ function openInspect(car){
   document.getElementById('car-select').classList.add('hidden');
   const inspect = document.getElementById('inspect');
   inspect.classList.remove('hidden');
-  initThree(car);
   setupLeaguesAndEmblems();
+  try { initThree(car); } catch (e) { console.error(e); }
   const nameInput = document.getElementById('player-name');
   const leaguesRoot = document.getElementById('league-options');
   const emblemsRoot = document.getElementById('emblem-options');
