@@ -425,38 +425,32 @@ function initThree(car){
   controls.enableDamping = true;
   controls.target.set(0, 0.5, 0);
 
-  // Load GLTF model; fallback to simple geometry
-  let body = null;
-  if (THREE.GLTFLoader) {
-    const loader = new THREE.GLTFLoader();
-    // Using a lightweight demo car GLB hosted on jsDelivr (low poly)
-    const url = 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Avocado/glTF-Binary/Avocado.glb';
-    loader.load(url, (gltf) => {
-      const root = gltf.scene;
-      root.traverse((obj) => { if (obj.isMesh) { obj.castShadow = true; obj.receiveShadow = true; } });
-      root.scale.set(0.02, 0.02, 0.02);
-      root.position.y = 0.2;
-      scene.add(root);
-      three.mesh = root;
-    }, undefined, () => {
-      // Fallback if failed
-      const bodyColor = new THREE.Color(car.color);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
-      const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
-      body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = 0.6;
-      scene.add(body);
-      three.mesh = body;
-    });
-  } else {
-    const bodyColor = new THREE.Color(car.color);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
-    const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
-    body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.6;
-    scene.add(body);
-    three.mesh = body;
-  }
+  // Always-create procedural car model (body + cabin + wheels)
+  const bodyColor = new THREE.Color(car.color);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
+  const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = 0.6;
+  scene.add(body);
+
+  const cabinMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.2, roughness: 0.7 });
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.45, 0.9), cabinMat);
+  cabin.position.set(0, 1.0, 0);
+  scene.add(cabin);
+
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.6, roughness: 0.4 });
+  const wheelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.2, 22);
+  const w1 = new THREE.Mesh(wheelGeo, wheelMat);
+  const w2 = new THREE.Mesh(wheelGeo, wheelMat);
+  const w3 = new THREE.Mesh(wheelGeo, wheelMat);
+  const w4 = new THREE.Mesh(wheelGeo, wheelMat);
+  [w1,w2,w3,w4].forEach(w=>{ w.rotation.z = Math.PI/2; w.castShadow = true; w.receiveShadow = true; scene.add(w); });
+  w1.position.set(-0.9, 0.4,  0.5);
+  w2.position.set( 0.9, 0.4,  0.5);
+  w3.position.set(-0.9, 0.4, -0.5);
+  w4.position.set( 0.9, 0.4, -0.5);
+
+  three.mesh = body;
 
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 64), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1 }));
   ground.rotation.x = -Math.PI/2;
