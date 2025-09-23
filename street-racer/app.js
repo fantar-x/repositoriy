@@ -10,7 +10,8 @@ const state = {
     lastSpawnAtMs: 0
   },
   sounds: {
-    keyClick: null
+    keyClick: null,
+    volume: 0.7
   }
 };
 
@@ -26,7 +27,8 @@ function playBuffer(ctx, buffer, volume = 0.5) {
   const source = ctx.createBufferSource();
   source.buffer = buffer;
   const gain = ctx.createGain();
-  gain.gain.value = volume;
+  const vol = Math.max(0, Math.min(1, (state.sounds.volume ?? 0.7) * volume));
+  gain.gain.value = vol;
   source.connect(gain).connect(ctx.destination);
   source.start(0);
 }
@@ -175,12 +177,17 @@ function toCarSelect() {
 function setupUI() {
   const startBtn = document.getElementById('start-btn');
   const backBtn = document.getElementById('back-to-menu');
+  const hamburger = document.getElementById('hamburger');
+  const settings = document.getElementById('settings');
+  const settingsClose = document.getElementById('settings-close');
+  const volumeRange = document.getElementById('volume');
+  const langSelect = document.getElementById('lang');
   startBtn.addEventListener('click', async () => {
     try {
       if (!state.sounds.keyClick) {
         state.sounds.keyClick = await loadAudioBuffer('https://cdn.jsdelivr.net/gh/naptha/tiny-sfx@latest/click1.wav');
       }
-      playBuffer(state.sounds.keyClick.audioContext, state.sounds.keyClick.buffer, 0.35);
+      playBuffer(state.sounds.keyClick.audioContext, state.sounds.keyClick.buffer, 0.5);
     } catch {}
     toCarSelect();
   });
@@ -188,6 +195,29 @@ function setupUI() {
     state.current = 'menu';
     document.getElementById('car-select').classList.add('hidden');
     document.getElementById('ui').classList.remove('hidden');
+  });
+
+  // Settings modal events
+  hamburger?.addEventListener('click', () => settings?.classList.remove('hidden'));
+  settingsClose?.addEventListener('click', () => settings?.classList.add('hidden'));
+  // Volume
+  const savedV = Number(localStorage.getItem('volume') || '70');
+  if (!Number.isNaN(savedV)) {
+    state.sounds.volume = Math.max(0, Math.min(1, savedV / 100));
+    if (volumeRange) volumeRange.value = String(savedV);
+  }
+  volumeRange?.addEventListener('input', (e) => {
+    const v = Number(e.target.value);
+    state.sounds.volume = Math.max(0, Math.min(1, v / 100));
+    localStorage.setItem('volume', String(v));
+  });
+  // Language
+  const savedLang = localStorage.getItem('lang') || 'ru';
+  if (langSelect) langSelect.value = savedLang;
+  applyI18n(savedLang);
+  langSelect?.addEventListener('change', () => {
+    localStorage.setItem('lang', langSelect.value);
+    applyI18n(langSelect.value);
   });
 }
 
@@ -298,9 +328,10 @@ function renderCarCards() {
     }
     const choose = document.createElement('button');
     choose.className = 'btn primary choose';
-    choose.textContent = 'Выбрать';
+    choose.setAttribute('data-i18n','choose');
+    choose.textContent = t('choose');
     choose.addEventListener('click', () => {
-      alert(`Вы выбрали: ${car.make} ${car.model} ${car.year}`);
+      openInspect(car);
     });
 
     card.appendChild(title);
@@ -326,4 +357,116 @@ window.addEventListener('DOMContentLoaded', () => {
   renderCarCards();
 });
 
+// i18n
+const I18N = {
+  ru: { title: 'Street Racer', start: 'Начать заезд', back: 'Назад', settings: 'Настройки', language: 'Язык', volume: 'Громкость', close: 'Закрыть', carSelectTitle: 'Выбор машины', carSelectSubtitle: 'Фон чёрный, выберите автомобиль:', choose: 'Выбрать', inspectTitle: 'Осмотр автомобиля', color: 'Цвет', name: 'Имя персонажа', next: 'Далее' },
+  en: { title: 'Street Racer', start: 'Start Race', back: 'Back', settings: 'Settings', language: 'Language', volume: 'Volume', close: 'Close', carSelectTitle: 'Car Selection', carSelectSubtitle: 'Black background, choose a car:', choose: 'Choose', inspectTitle: 'Car Inspection', color: 'Color', name: 'Character Name', next: 'Next' },
+  fr: { title: 'Street Racer', start: 'Commencer', back: 'Retour', settings: 'Paramètres', language: 'Langue', volume: 'Volume', close: 'Fermer', carSelectTitle: 'Sélection de voiture', carSelectSubtitle: 'Fond noir, choisissez une voiture:', choose: 'Choisir', inspectTitle: 'Inspection de voiture', color: 'Couleur', name: 'Nom du personnage', next: 'Suivant' },
+  de: { title: 'Street Racer', start: 'Rennen starten', back: 'Zurück', settings: 'Einstellungen', language: 'Sprache', volume: 'Lautstärke', close: 'Schließen', carSelectTitle: 'Fahrzeugauswahl', carSelectSubtitle: 'Schwarzer Hintergrund, wählen Sie ein Auto:', choose: 'Wählen', inspectTitle: 'Fahrzeuginspektion', color: 'Farbe', name: 'Charaktername', next: 'Weiter' },
+  es: { title: 'Street Racer', start: 'Iniciar carrera', back: 'Atrás', settings: 'Configuración', language: 'Idioma', volume: 'Volumen', close: 'Cerrar', carSelectTitle: 'Selección de coche', carSelectSubtitle: 'Fondo negro, elige un coche:', choose: 'Elegir', inspectTitle: 'Inspección del coche', color: 'Color', name: 'Nombre del personaje', next: 'Siguiente' }
+};
+let currentLang = 'ru';
+function t(key){
+  return (I18N[currentLang] && I18N[currentLang][key]) || key;
+}
+function applyI18n(lang){
+  currentLang = lang in I18N ? lang : 'ru';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!key) return;
+    el.textContent = t(key);
+  });
+}
+
+// 3D inspect
+function openInspect(car){
+  document.getElementById('car-select').classList.add('hidden');
+  const inspect = document.getElementById('inspect');
+  inspect.classList.remove('hidden');
+  initThree(car);
+}
+
+let three = { scene: null, renderer: null, camera: null, controls: null, mesh: null };
+function initThree(car){
+  if (typeof THREE === 'undefined') {
+    alert('3D is unavailable on this device/browser');
+    return;
+  }
+  const container = document.getElementById('inspect-viewport');
+  container.innerHTML = '';
+  const width = container.clientWidth || 600;
+  const height = container.clientHeight || 400;
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 100);
+  camera.position.set(3, 2, 4);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 1.0);
+  scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(5, 5, 5);
+  scene.add(dir);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.target.set(0, 0.5, 0);
+
+  // Simple car-like geometry placeholder (until real GLTF)
+  const bodyColor = new THREE.Color(car.color);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, metalness: 0.4, roughness: 0.5 });
+  const bodyGeo = new THREE.BoxGeometry(2.2, 0.6, 1.0);
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = 0.6;
+  scene.add(body);
+
+  const cabinMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.2, roughness: 0.7 });
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.9), cabinMat);
+  cabin.position.set(0, 1.0, 0);
+  scene.add(cabin);
+
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 64), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1 }));
+  ground.rotation.x = -Math.PI/2;
+  scene.add(ground);
+
+  three = { scene, renderer, camera, controls, mesh: body };
+
+  const animate = () => {
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  };
+  animate();
+
+  // color swatches
+  setupColorSwatches(car);
+
+  // next button
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.onclick = () => {
+    alert(`${t('next')}: ${car.make} ${car.model} ${car.year} | name: ${document.getElementById('player-name').value || '-'}`);
+  };
+}
+
+function setupColorSwatches(car){
+  const swatches = document.getElementById('color-swatches');
+  if (!swatches) return;
+  swatches.innerHTML = '';
+  const colors = ['#ff6b6b', '#5ec8ff', '#b389ff', '#fff200', '#00e5ff', '#ffffff', '#222222'];
+  for (const c of colors) {
+    const btn = document.createElement('button');
+    btn.style.background = c;
+    btn.title = c;
+    btn.addEventListener('click', () => {
+      car.color = c;
+      if (three.mesh && three.mesh.material) {
+        three.mesh.material.color = new THREE.Color(c);
+        three.mesh.material.needsUpdate = true;
+      }
+    });
+    swatches.appendChild(btn);
+  }
+}
 

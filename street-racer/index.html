@@ -10,6 +10,9 @@
   <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
   <!-- PixiJS CDN (reliable) -->
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.0/dist/pixi.min.js" defer></script>
+  <!-- Three.js for 3D viewer -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js" defer></script>
   <script src="./app.js" type="module" defer></script>
   <link rel="manifest" href="data:application/manifest+json,{\n  \"name\": \"Street Racer\",\n  \"short_name\": \"Racer\",\n  \"display\": \"standalone\",\n  \"background_color\": \"#000000\",\n  \"theme_color\": \"#000000\"\n}">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,19 +24,69 @@
   <div id="game-container" aria-label="Game canvas"></div>
 
   <div id="ui" class="overlay">
+    <button id="hamburger" class="hamburger" aria-label="Settings" title="Settings" tabindex="0">
+      <span></span><span></span><span></span>
+    </button>
     <div class="center">
-      <h1 class="logo" aria-label="Street Racer">Street Racer</h1>
-      <button id="start-btn" class="btn primary" aria-label="Начать заезд">Начать заезд</button>
+      <h1 class="logo" aria-label="Street Racer" data-i18n="title">Street Racer</h1>
+      <button id="start-btn" class="btn primary" aria-label="Начать заезд" data-i18n="start">Начать заезд</button>
     </div>
   </div>
 
   <div id="car-select" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="car-select-title">
     <div class="car-select-wrap">
-      <h2 id="car-select-title">Выбор машины</h2>
-      <p class="subtitle">Фон чёрный, выберите автомобиль:</p>
+      <h2 id="car-select-title" data-i18n="carSelectTitle">Выбор машины</h2>
+      <p class="subtitle" data-i18n="carSelectSubtitle">Фон чёрный, выберите автомобиль:</p>
       <div id="car-cards" class="cards"></div>
       <div class="actions">
-        <button id="back-to-menu" class="btn ghost">Назад</button>
+        <button id="back-to-menu" class="btn ghost" data-i18n="back">Назад</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settings" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="settings-wrap">
+      <h2 id="settings-title" data-i18n="settings">Настройки</h2>
+      <div class="field">
+        <label for="lang" class="label" data-i18n="language">Язык</label>
+        <select id="lang">
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="volume" class="label" data-i18n="volume">Громкость</label>
+        <input id="volume" type="range" min="0" max="100" step="1" value="70" />
+      </div>
+      <div class="actions">
+        <button id="settings-close" class="btn primary" data-i18n="close">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Car inspection 3D screen -->
+  <div id="inspect" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="inspect-title">
+    <div class="inspect-wrap">
+      <h2 id="inspect-title" data-i18n="inspectTitle">Осмотр автомобиля</h2>
+      <div class="inspect-grid">
+        <div class="inspect-left">
+          <div class="field">
+            <label class="label" data-i18n="color">Цвет</label>
+            <div id="color-swatches" class="swatches"></div>
+          </div>
+          <div class="field">
+            <label for="player-name" class="label" data-i18n="name">Имя персонажа</label>
+            <input id="player-name" type="text" maxlength="20" placeholder="Ваше имя" />
+          </div>
+        </div>
+        <div id="inspect-viewport" class="inspect-viewport" aria-label="3D viewport"></div>
+        <div class="inspect-right">
+          <button id="next-btn" class="btn primary" data-i18n="next">Далее</button>
+        </div>
       </div>
     </div>
   </div>

@@ -35,6 +35,22 @@ html, body {
 }
 .overlay > * { pointer-events: auto; }
 
+.hamburger {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 5;
+}
+.hamburger span { display: block; width: 22px; height: 2px; background: #fff; margin: 3px 0; }
+
 .center {
   display: grid;
   gap: 20px;
@@ -129,4 +145,45 @@ html, body {
 @supports (padding: max(0px)) {
   .center, .car-select-wrap { padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
 }
+
+/* Settings */
+.settings-wrap {
+  width: min(520px, 94vw);
+  padding: 20px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.field { display: grid; gap: 8px; margin: 12px 0; }
+.label { color: var(--muted); font-size: 14px; }
+.settings-wrap select, .settings-wrap input[type="range"], .inspect-wrap input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.35);
+  color: var(--fg);
+}
+
+/* Inspect */
+.inspect-wrap { width: min(1100px, 96vw); }
+.inspect-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr 140px;
+  gap: 16px;
+  align-items: stretch;
+}
+@media (max-width: 900px) {
+  .inspect-grid { grid-template-columns: 1fr; }
+  .inspect-right { order: 3; }
+}
+.inspect-viewport {
+  height: min(60vh, 520px);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatches button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); cursor: pointer; background: transparent; }
 
