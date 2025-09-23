@@ -214,20 +214,5 @@ html, body {
 .menu-cars { position: absolute; top: 70px; left: 16px; }
 .menu-start { position: absolute; right: 16px; bottom: 16px; padding: 16px 22px; font-size: 18px; }
 
-/* Cars modal */
-.cars-wrap {
-  width: min(1000px, 96vw);
-  max-height: min(80vh, 720px);
-  overflow: auto;
-  padding: 16px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.cars-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.cars-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
-@media (max-width: 900px) { .cars-grid { grid-template-columns: 1fr; } }
-.car-card { display: grid; gap: 8px; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.35); }
-.car-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; }
-.car-name { font-weight: 700; }
+/* (removed cars modal styles) */
 

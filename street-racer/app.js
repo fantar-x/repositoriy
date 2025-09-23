@@ -1,28 +1,3 @@
-// Cars modal logic
-function openCarsModal(){
-  const modal = document.getElementById('cars-modal');
-  const list = document.getElementById('cars-list');
-  const close = document.getElementById('cars-close');
-  if (!modal || !list) return;
-  list.innerHTML = '';
-  for (const car of REAL_CARS) {
-    const card = document.createElement('div');
-    card.className = 'car-card';
-    const img = document.createElement('img');
-    img.className = 'car-thumb';
-    img.src = car.photo;
-    img.alt = `${car.make} ${car.model}`;
-    const name = document.createElement('div');
-    name.className = 'car-name';
-    name.textContent = `${car.make} ${car.model} • ${car.year}`;
-    card.appendChild(img);
-    card.appendChild(name);
-    list.appendChild(card);
-  }
-  modal.classList.remove('hidden');
-  close?.addEventListener('click', () => modal.classList.add('hidden'), { once: true });
-}
-
 // Minimal PixiJS bootstrap with animated dark-street background
 
 const state = {
@@ -207,7 +182,6 @@ function setupUI() {
   const settingsClose = document.getElementById('settings-close');
   const volumeRange = document.getElementById('volume');
   const langSelect = document.getElementById('lang');
-  const openMainBtn = document.getElementById('open-main-menu');
   startBtn.addEventListener('click', async () => {
     try {
       if (!state.sounds.keyClick) {
@@ -216,10 +190,6 @@ function setupUI() {
       playBuffer(state.sounds.keyClick.audioContext, state.sounds.keyClick.buffer, 0.5);
     } catch {}
     toCarSelect();
-  });
-  openMainBtn?.addEventListener('click', () => {
-    document.getElementById('ui').classList.add('hidden');
-    document.getElementById('main-menu').classList.remove('hidden');
   });
   backBtn.addEventListener('click', () => {
     state.current = 'menu';
@@ -321,15 +291,31 @@ function renderCarCards() {
     preview.style.height = '120px';
     preview.style.display = 'grid';
     preview.style.placeItems = 'center';
-    // Photo thumbnail cropped
-    const img = document.createElement('img');
-    img.src = car.photo;
-    img.alt = `${car.make} ${car.model}`;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    img.style.borderRadius = '8px';
-    preview.appendChild(img);
+    // Lightweight inline SVG preview (no nested Pixi)
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '240');
+    svg.setAttribute('height', '120');
+    svg.setAttribute('viewBox', '0 0 240 120');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '90');
+    rect.setAttribute('y', '52');
+    rect.setAttribute('rx', '8');
+    rect.setAttribute('ry', '8');
+    rect.setAttribute('width', '60');
+    rect.setAttribute('height', '16');
+    rect.setAttribute('fill', car.color);
+    rect.setAttribute('stroke', '#000');
+    rect.setAttribute('stroke-opacity', '0.6');
+    const roof = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    roof.setAttribute('x', '96');
+    roof.setAttribute('y', '46');
+    roof.setAttribute('width', '48');
+    roof.setAttribute('height', '8');
+    roof.setAttribute('fill', '#222');
+    roof.setAttribute('fill-opacity', '0.65');
+    svg.appendChild(rect);
+    svg.appendChild(roof);
+    preview.appendChild(svg);
 
     const specs = document.createElement('div');
     specs.className = 'specs';
@@ -372,14 +358,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   setupUI();
   renderCarCards();
-  // Optional: open main menu via URL ?screen=main
-  const params = new URLSearchParams(location.search);
-  if (params.get('screen') === 'main') {
-    document.getElementById('ui').classList.add('hidden');
-    document.getElementById('main-menu').classList.remove('hidden');
-  }
-  // Wire main-menu buttons
-  document.getElementById('menu-cars')?.addEventListener('click', openCarsModal);
+  // Wire main-menu buttons (placeholder)
+  document.getElementById('menu-cars')?.addEventListener('click', () => alert('Список машин (в разработке)'));
   document.getElementById('menu-store')?.addEventListener('click', () => alert('Магазин скоро будет доступен'));
   document.getElementById('menu-start')?.addEventListener('click', () => alert('Старт заезда (в разработке)'));
 });
