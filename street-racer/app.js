@@ -2,7 +2,7 @@
 
 const CONFIG = {
   // Put your final Yandex URL here (e.g., https://<bucket>.website.yandexcloud.net or https://storage.yandexcloud.net/<bucket>/)
-  startUrl: 'https://yandex.ru'
+  startUrl: 'https://street-racer-app.website.yandexcloud.net'
 };
 
 const state = {
