@@ -12,6 +12,12 @@ const state = {
   sounds: {
     keyClick: null,
     volume: 0.7
+  },
+  selected: {
+    car: null,
+    sprite: null,
+    glow: null,
+    baseY: 0
   }
 };
 
@@ -166,6 +172,12 @@ function update() {
   };
   advance(state.bg.cars);
   advance(state.bg.police);
+  // Idle bobbing for selected car sprite if present
+  if (state.selected.sprite) {
+    const t = now / 1000;
+    state.selected.sprite.y = state.selected.baseY + Math.sin(t * 2.0) * 4;
+    if (state.selected.glow) state.selected.glow.y = state.selected.sprite.y + 14;
+  }
 }
 
 function toCarSelect() {
@@ -407,6 +419,10 @@ function openInspect(car){
     const name = document.getElementById('player-name')?.value?.trim();
     const leagueSelected = document.querySelector('.league-card.selected');
     if (!name || !leagueSelected) return;
+    // Remember chosen car
+    state.selected.car = car;
+    // Add selected car to background
+    try { addSelectedCarSprite(); } catch(e) { console.error(e); }
     document.getElementById('inspect').classList.add('hidden');
     document.getElementById('main-menu').classList.remove('hidden');
     // Allow direct open via URL parameter
@@ -414,6 +430,37 @@ function openInspect(car){
     url.searchParams.set('screen','main');
     history.replaceState({}, '', url);
   };
+}
+function addSelectedCarSprite(){
+  if (!state.app || !state.selected.car) return;
+  const app = state.app;
+  // cleanup old
+  if (state.selected.sprite) { app.stage.removeChild(state.selected.sprite); state.selected.sprite = null; }
+  if (state.selected.glow) { app.stage.removeChild(state.selected.glow); state.selected.glow = null; }
+  // Create glow ellipse
+  const glow = new PIXI.Graphics();
+  const w = Math.max(120, app.renderer.width * 0.25);
+  glow.ellipse(0, 0, w * 0.45, 16).fill(0x00e5ff, 0.08);
+  glow.x = app.renderer.width * 0.5;
+  glow.y = app.renderer.height - 70;
+  app.stage.addChild(glow);
+  // Create simple car silhouette
+  const g = new PIXI.Graphics();
+  const color = PIXI.utils.string2hex(state.selected.car.color || '#ffffff');
+  g.beginFill(color, 0.95);
+  g.drawRoundedRect(-36, -16, 72, 32, 8);
+  g.endFill();
+  g.beginFill(0x222222, 0.8);
+  g.drawRect(-26, -24, 52, 10);
+  g.endFill();
+  g.x = glow.x;
+  const baseY = glow.y - 14;
+  g.y = baseY;
+  g.scale.set(1.6);
+  app.stage.addChild(g);
+  state.selected.sprite = g;
+  state.selected.glow = glow;
+  state.selected.baseY = baseY;
 }
 
 let three = { scene: null, renderer: null, camera: null, controls: null, mesh: null };
