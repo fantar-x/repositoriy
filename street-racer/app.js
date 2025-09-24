@@ -1,5 +1,10 @@
 // Minimal PixiJS bootstrap with animated dark-street background
 
+const CONFIG = {
+  // Put your final Yandex URL here (e.g., https://<bucket>.website.yandexcloud.net or https://storage.yandexcloud.net/<bucket>/)
+  startUrl: 'https://yandex.ru'
+};
+
 const state = {
   current: 'menu', // 'menu' | 'car-select'
   app: null,
@@ -370,10 +375,16 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   setupUI();
   renderCarCards();
-  // Wire main-menu buttons (placeholder)
+  // Wire main-menu buttons
   document.getElementById('menu-cars')?.addEventListener('click', () => alert('Список машин (в разработке)'));
   document.getElementById('menu-store')?.addEventListener('click', () => alert('Магазин скоро будет доступен'));
-  document.getElementById('menu-start')?.addEventListener('click', () => alert('Старт заезда (в разработке)'));
+  document.getElementById('menu-start')?.addEventListener('click', () => {
+    if (CONFIG.startUrl && /^https?:\/\//.test(CONFIG.startUrl)) {
+      location.href = CONFIG.startUrl;
+    } else {
+      alert('Ссылка недоступна. Укажите корректный Yandex URL в CONFIG.startUrl');
+    }
+  });
 });
 
 // i18n
